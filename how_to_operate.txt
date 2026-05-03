@@ -1,0 +1,64 @@
+必看，照着执行即可！！！
+确保电脑已安装：
+Python 3.8 或更高版本（在终端输入 python --version 检查）
+pip（Python 包管理器，通常与 Python 一起安装）
+
+
+打开终端（Windows 用 CMD 或 PowerShell，Mac/Linux 用 Terminal），切换到项目文件夹：
+cd 你的项目路径/pjt_rag
+
+
+创建虚拟环境（推荐，但不是必须）
+# 创建虚拟环境（venv是环境名称，可自定义）
+python -m venv venv
+# 激活虚拟环境
+# Windows:
+venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+激活后，终端行首会出现 (venv) 字样。
+
+
+安装所有依赖
+确保终端路径在项目根目录（包含 requirements.txt 文件），执行：
+pip install -r requirements.txt
+
+
+配置 API Key（千问）
+在项目根目录下找到 .env.example 文件。
+复制一份并重命名为 .env（注意前面有个点）。
+Windows 可能提示“必须输入文件名”，可以用命令：copy .env.example .env
+或直接新建文本文件，命名为 .env
+用记事本/VS Code 打开 .env，将 your-actual-api-key 替换为真实的千问 API Key
+
+为防止盗刷，请大家自行申请API Key，免费额度肯定够用
+#申请网址#：https://bailian.console.aliyun.com
+在阿里云https://www.aliyun.com完成注册和实名认证后，在#申请网址#的常用功能中选择API Key，创建一个即可。
+
+设置好API可以运行一下test_embedding.py，看看能否成功调用
+
+！！运行主程序！！
+python main.py
+
+（这里评估的速度会比较慢，第一次的话可能要半小时左右，耐心等待TAT）
+
+负责测试评估时必看！！！
+1.
+在运行后打开outputs/qa_eval.csv
+找到 correct 列（当前为空）。
+对照 ground_truth 标准答案，判断 rag_answer 是否正确：
+正确 → 填 1
+错误 → 填 0
+填的时候注意不要把文件编码改了，要不然失败分析会报错
+2.
+再次运行主程序或单独运行failure_analyzer（建议单独运行，主程序耗时较长）
+此时会在outputs中生成失败案例的文档，可据此人工进行分析失败原因
+
+注：
+1.如果对知识库或代码进行更新后，要重复运行，需要在运行前先删除旧的embedding缓存文件
+执行：rm -f outputs/embeddings_cache.pkl
+Windows下执行：del outputs\embeddings_cache.pkl
+
+2.现在评估时有时会卡，如果很长时间卡住不动，可以ctrl+c终止当前运行，然后重来。这里留到中期之后进行优化
+
+3.目前因为prompt设置，非rag的回答很长。这个也算做中期之后的优化吧，先不改了

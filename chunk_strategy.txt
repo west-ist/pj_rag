@@ -1,0 +1,39 @@
+本次数据清洗与分块结果（已按最新指令重做）
+
+一、数据来源
+1) 《个人信息保护法》全文（从本地 docx 抽取，按法条分块）
+2) 《民法典》个人信息相关条款（第一千零三十四条至第一千零三十九条）
+3) GB/T 35273 指定内容（3术语与定义、4基本原则、附录A/B关键条目）
+4) 《数据安全法》全文（按法条分块）
+5) 案例材料（2个指导案例 + 10个典型案例，按要点拆分）
+
+二、清洗规则
+1) 统一空白：将多余空格/空行压缩为单一空格，去除不可见空白字符。
+2) 统一结构：保留法条/术语编号与列项标记（如（⼀）/a)），便于精确引用。
+3) 元数据统一：source_type/source_title/source_id/chapter/section/article_ref/case_no/chunk_role。
+
+三、分块策略
+1) 法律条文：按“法条”分块（article-level），每条为独立 chunk。
+2) 标准文本：按“术语/原则/附录条目”分块，兼顾语义完整与检索粒度。
+3) 案例文本：按“关键词/要点/案情/理由/结果（或要旨）”拆为知识块，便于问答检索与引用。
+4) 章节处理：章节、节仅作为 metadata 标签，不单独生成 chunk。
+
+四、产出统计
+1) PIPL chunk 数：74
+2) 民法典 chunk 数：6
+3) GB/T 35273 chunk 数：48
+4) 案例 chunk 数：20
+5) 数据安全法 chunk 数：55
+6) 总 chunk 数：203
+
+五、字段说明
+- chunk_id：唯一分块编号（如 pipl_001 / civil_001 / gb_001 / case_001 / dsl_001）
+- text：清洗后的知识文本
+- metadata.source_type：law / standard / case
+- metadata.source_title：来源名称
+- metadata.source_id：来源缩写标识
+- metadata.chapter：章节标签（仅标签，不独立 chunk）
+- metadata.section：节标签（仅标签，不独立 chunk）
+- metadata.article_ref：法条号或标准编号
+- metadata.case_no：案例编号（非案例为空）
+- metadata.chunk_role：分块类型（如 law_article / standard_clause / standard_principle / standard_appendix_item / case_keyword / case_main_point / case_fact / case_reason / case_result / case_typical_gist）
