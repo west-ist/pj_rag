@@ -1,39 +1,226 @@
-本次数据清洗与分块结果（已按最新指令重做）
+分块说明
 
-一、数据来源
-1) 《个人信息保护法》全文（从本地 docx 抽取，按法条分块）
-2) 《民法典》个人信息相关条款（第一千零三十四条至第一千零三十九条）
-3) GB/T 35273 指定内容（3术语与定义、4基本原则、附录A/B关键条目）
-4) 《数据安全法》全文（按法条分块）
-5) 案例材料（2个指导案例 + 10个典型案例，按要点拆分）
+一、知识库简介
 
-二、清洗规则
-1) 统一空白：将多余空格/空行压缩为单一空格，去除不可见空白字符。
-2) 统一结构：保留法条/术语编号与列项标记（如（⼀）/a)），便于精确引用。
-3) 元数据统一：source_type/source_title/source_id/chapter/section/article_ref/case_no/chunk_role。
+本知识库用于个人信息保护法相关 RAG 问答系统，主要服务于法条问答、规范解释、标准规则检索、案例分析和检索增强生成。
 
-三、分块策略
-1) 法律条文：按“法条”分块（article-level），每条为独立 chunk。
-2) 标准文本：按“术语/原则/附录条目”分块，兼顾语义完整与检索粒度。
-3) 案例文本：按“关键词/要点/案情/理由/结果（或要旨）”拆为知识块，便于问答检索与引用。
-4) 章节处理：章节、节仅作为 metadata 标签，不单独生成 chunk。
+本项目包含一份基础知识库和三份派生知识库：
 
-四、产出统计
-1) PIPL chunk 数：74
-2) 民法典 chunk 数：6
-3) GB/T 35273 chunk 数：48
-4) 案例 chunk 数：20
-5) 数据安全法 chunk 数：55
-6) 总 chunk 数：203
+1) 基础知识库.json：保留最细粒度的结构化 chunk，共 343 条。该文件作为主训练/检索知识库使用。
+2) 知识库_chunks_300.json：轻度合并版本，共 183 条，用于 chunk-size 对比实验。
+3) 知识库_chunks_600.json：中度合并版本，共 57 条，用于 chunk-size 对比实验。
+4) 知识库_chunks_900.json：重度合并版本，共 46 条，用于 chunk-size 对比实验。
 
-五、字段说明
-- chunk_id：唯一分块编号（如 pipl_001 / civil_001 / gb_001 / case_001 / dsl_001）
-- text：清洗后的知识文本
-- metadata.source_type：law / standard / case
-- metadata.source_title：来源名称
-- metadata.source_id：来源缩写标识
-- metadata.chapter：章节标签（仅标签，不独立 chunk）
-- metadata.section：节标签（仅标签，不独立 chunk）
-- metadata.article_ref：法条号或标准编号
-- metadata.case_no：案例编号（非案例为空）
-- metadata.chunk_role：分块类型（如 law_article / standard_clause / standard_principle / standard_appendix_item / case_keyword / case_main_point / case_fact / case_reason / case_result / case_typical_gist）
+需要说明的是，三档派生知识库并不是替代基础知识库的主库，而是在基础知识库内容不变的前提下，对相邻且同源的 chunk 进行不同程度合并，用于观察 chunk 粒度变化对检索命中率、回答完整性和错误类型的影响。
+
+二、数据来源
+
+1) 《个人信息保护法》全文，按法条分块，编号为 pipl_001 至 pipl_074。
+2) 《民法典》个人信息相关条款，即第一千零三十四条至第一千零三十九条，按条款分块，编号为 civil_001 至 civil_006。
+3) GB/T 35273 指定内容，包括术语与定义、基本原则、附录 A/B 关键条目，按术语、原则或附录条目分块，编号为 gb_001 至 gb_048。
+4) 《数据安全法》全文，按法条分块，编号为 dsl_001 至 dsl_055。
+5) 案例材料：
+   - 典型案例要旨：case_01 至 case_10，每个案例 1 条要旨块。
+   - 指导性案例：指导性案例192号、指导性案例194号、指导性案例265号、指导性案例266号，各 10 条结构化块。
+   - 典型案例、检察公益诉讼案例、法院发布案例、检例案例：
+     case_bj_app_consent、
+     case_parking_xushui、
+     case_doxxing_linan、
+     case_access_record、
+     case_property_desensitization、
+     case_sms_marketing、
+     case_app_wechat_friend、
+     case_sim_public_interest、
+     case_offline_trade_miniprogram、
+     case_algorithm_inaccuracy、
+     case_minor_network，
+     每个案例 10 条结构化块。
+
+案例材料覆盖 APP 过度收集、自动勾选同意、撤回同意、智慧停车扫码缴费、网络开盒、查阅复制权、去标识化访问记录、脱敏处理、商业短信营销、微信好友关系、实名手机卡、线下交易信息共享、算法错误、人脸信息、未成年人网络服务、公开信息合理处理边界等场景。
+
+三、清洗规则
+
+1) 统一空白：
+将多余空格、空行和不可见空白字符进行清理，避免影响向量化和检索；同时保留条文内部必要换行，以维持法条列项、标准条目和案例理由的结构。
+
+2) 统一结构：
+保留法条编号、条款编号、标准编号和列项标记，例如“第×条”“（一）（二）”“A.1.1”“B.1.1”等，便于精确引用、定位和后续人工核查。
+
+3) 统一文本字段：
+所有可检索内容统一放入 text 字段。法律条文保留完整条文内容，标准文本保留术语或条目定义，案例文本保留关键词、事实、争点、理由、结果或结论等核心语义。
+
+4) 元数据保留：
+保留条目原有 metadata 字段。基础知识库中的法律和标准类 chunk 通常包含 source_id、chunk_role、source_type、chapter、section、case_no、source_title、article_ref 等字段；部分案例类 chunk 使用 source_type、source_title、case_no、article_ref 等核心字段。
+
+5) 核心 metadata 字段：
+无论字段数量是否完全一致，核心字段均为：
+   - source_type
+   - source_title
+   - case_no
+   - article_ref
+
+代码读取和检索展示时，应优先依赖上述核心字段，不应因不同来源 metadata 字段数量不同而跳过某些 chunk。
+
+四、基础知识库分块策略
+
+1) 法律条文：
+按“法条/条款”分块，即 article-level 分块。通常每一条法律条文对应一个独立 chunk。较长条文保留完整款项和列项，不强行拆断内部法律逻辑。
+
+适用范围包括：
+   - 《个人信息保护法》：pipl_001 至 pipl_074；
+   - 《民法典》人格权编个人信息相关条款：civil_001 至 civil_006；
+   - 《数据安全法》：dsl_001 至 dsl_055。
+
+2) 标准文本：
+按“术语/原则/附录条目”分块，兼顾语义完整与检索粒度。GB/T 35273 中的术语定义、基本原则、附录 A 个人信息示例、附录 B 个人敏感信息判定与示例均按独立语义条目分块。
+
+3) 典型案例要旨：
+case_01 至 case_10 采用单案例摘要式分块。每个 chunk 概括一个典型案例的核心场景、个人信息处理问题、检察或司法处理方式、整改治理结果和案例意义，适合快速召回类似场景案例。
+
+4) 结构化案例：
+案例文本按结构化要点分块，通常拆分顺序为：
+   - 关键词；
+   - 裁判要点 / 处理要点 / 指导要点；
+   - 争议焦点 / 问题焦点；
+   - 基本事实；
+   - 裁判结果 / 处理结果；
+   - 理由其一；
+   - 理由其二；
+   - 理由其三；
+   - 相关法条；
+   - 结论。
+
+根据材料完整性，部分案例可为 8 至 10 块。结构化拆分的目的在于便于检索系统区分事实、争点、理由和结论，也便于在案例分析题中分别召回事实材料与规则材料。
+
+5) 章节处理：
+chapter 和 section 仅作为 metadata 标签，用于定位条文或材料来源，不单独生成 chunk。
+
+五、基础知识库产出统计（新版知识库.json）
+
+1) 总 chunk 数：343。
+
+2) 按前缀统计：
+   - pipl：74
+   - civil：6
+   - gb：48
+   - dsl：55
+   - case_01 至 case_10：10
+   - case265：10
+   - case266：10
+   - case192_face_criminal：10
+   - case194_wechat_account：10
+   - 其他典型案例前缀：11 × 10 = 110
+
+3) 按 source_type 统计：
+   - law：135
+   - standard：48
+   - case：120
+   - guiding_case：40
+
+4) 案例相关 chunk 数：
+   - case：120
+   - guiding_case：40
+   - 合计：160
+
+5) 校验结果：
+   - 所有对象均包含 chunk_id；
+   - 所有对象均包含 text；
+   - 所有对象均包含 metadata；
+   - 不存在重复 chunk_id；
+   - 基础知识库可作为主训练/检索知识库使用。
+
+六、字段说明
+
+1) chunk_id：
+唯一分块编号，用于检索定位、命中判断和错误分析。
+示例：
+   - pipl_001
+   - civil_001
+   - gb_001
+   - dsl_001
+   - case_01
+   - case265_001
+
+2) text：
+清洗后的知识文本，是实际参与 embedding、向量检索和回答生成的字段。
+
+3) metadata：
+来源与标签信息，用于追踪内容来源、判断材料类型、辅助引用和分析检索结果。
+
+4) metadata.source_type：
+来源类型。当前包括：
+   - law：法律条文；
+   - standard：国家标准或规范性标准；
+   - case：典型案例、检察公益诉讼案例、地方司法案例、互联网法院案例、检例案例等；
+   - guiding_case：最高人民法院指导性案例。
+
+5) metadata.source_title：
+来源名称或案例标题。
+
+6) metadata.case_no：
+案例编号。有官方编号的案例填写对应编号，例如“指导性案例192号”“指导性案例265号”“检例第174号”；非案例或无明确官方编号的案例为 null。
+
+7) metadata.article_ref：
+法条号、标准编号或相关规范编号。多个编号用逗号连接；无明确依据时为 null。
+
+8) metadata.source_id：
+来源缩写标识，主要用于基础知识库中的法律和标准类 chunk。例如 pipl、civil_code、gbt_35273、dsl。
+
+9) metadata.chunk_role：
+分块类型，例如 law_article、standard_clause、standard_principle、standard_appendix、standard_appendix_item、case_typical_gist 等。
+
+10) metadata.chapter / metadata.section：
+章、节标签，仅作为定位信息保存，不单独生成 chunk。
+
+七、chunk_id 命名规范
+
+1) pipl_001 至 pipl_074：
+表示《个人信息保护法》条文。
+
+2) civil_001 至 civil_006：
+表示《民法典》人格权编个人信息相关条文。
+
+3) gb_001 至 gb_048：
+表示 GB/T 35273 标准条款、基本原则或附录条目。
+
+4) dsl_001 至 dsl_055：
+表示《数据安全法》条文。
+
+5) case_01 至 case_10：
+表示简要典型案例要旨。
+
+6) case265_001 至 case265_010、case266_001 至 case266_010：
+表示最高人民法院指导性案例265号、266号的结构化分块。
+
+7) case192_001 至 case192_010、case194_001 至 case194_010：
+表示最高人民法院指导性案例192号、194号的结构化分块。
+
+8) case_xxx_001 至 case_xxx_010：
+表示具体典型案例或检例案例的结构化分块。
+
+9) xxx_merged_001：
+表示三档派生知识库中由同源相邻 chunk 合并得到的分块。
+
+八、三档 chunk size 派生知识库
+
+三档派生知识库均由基础知识库生成，不改变原始知识库内容。
+
+需要特别说明，基础知识库.json 已经是“原子化结构化 chunk”，即最细粒度版本。三档派生知识库不是比基础库更细的切分，而是在基础原子 chunk 之上进行不同程度合并，用于比较上下文长度变化对 RAG 效果的影响。
+
+1) 知识库_chunks_300.json：
+   - chunk 数：183；
+   - 平均 text 长度：153.55；
+   - 定位：轻度合并版本；
+   - 作用：在保持较高检索定位精度的同时，缓解部分基础 chunk 过短导致的上下文割裂问题。
+
+2) 知识库_chunks_600.json：
+   - chunk 数：57；
+   - 平均 text 长度：497.40；
+   - 定位：中度合并版本；
+   - 作用：提供更完整的法条、标准或案例上下文，观察中等长度 chunk 对案例分析题和综合问答的影响。
+
+3) 知识库_chunks_900.json：
+   - chunk 数：46；
+   - 平均 text 长度：616.83；
+   - 定位：重度合并版本；
+   - 作用：尽量保留较完整的连续上下文，适合观察长 chunk 是否提升综合案例分析效果。

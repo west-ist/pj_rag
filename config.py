@@ -12,7 +12,7 @@ def load_env():
                     key, value = line.split('=', 1)
                     key = key.strip()
                     value = value.strip()
-                    # 去除可能的引号
+                    #去除可能的引号
                     if value.startswith('"') and value.endswith('"'):
                         value = value[1:-1]
                     if value.startswith("'") and value.endswith("'"):
@@ -38,3 +38,19 @@ cache_file = project_root/"outputs"/"embeddings_cache.pkl"#embedding缓存文件
 #检查
 if not Dashscope_key:
     print("请正确设置API密钥\n")
+
+#二编：chunk大小比较用
+chunk_experiment = True
+chunk_sizes = {
+    300:project_root/"mock_data"/"knowledgebase_chunks_300.json",
+    600:project_root/"mock_data"/"knowledgebase_chunks_600.json",
+    900:project_root/"mock_data"/"knowledgebase_chunks_900.json",
+}
+chunk_experiment_output = project_root/"outputs"/"chunk_experiment"
+#为防止缓存冲突，为每个chunk大小设立独立的缓存文件（llm辅助实现）
+cache_dir = project_root/"outputs"
+def get_cache_path(chunk_size: int = None) -> Path:
+    if chunk_size is None:
+        return cache_dir/"embeddings_cache.pkl"
+    else:
+        return cache_dir/f"embeddings_cache_{chunk_size}.pkl"

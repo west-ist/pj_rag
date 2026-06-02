@@ -21,7 +21,7 @@ def load_knowledge_base(json_file:Path)->Tuple[List[str],List[Dict]]:
 ##加载QA测试集
 def load_qa_testset(directory:Path)->List[Dict[str, str]]:
     qalist = []
-    with open(directory, "r", encoding="utf-8") as f:
+    with open(directory, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
             q = row["question"].strip()

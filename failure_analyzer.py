@@ -15,7 +15,7 @@ def failure_report():
     total = len(read)
     failed = len(failure)
     config.failure_root.parent.mkdir(parents=True, exist_ok=True)
-    with open(config.failure_root,'w',encoding='utf-8') as f:
+    with open(config.failure_root,'w',encoding='utf-8-sig') as f:
         f.write(f"失败案例汇总\n")
         f.write(f"共{total}个问题，其中{failed}个失败\n")
         f.write(f"失败案例如下\n")

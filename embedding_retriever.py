@@ -53,8 +53,6 @@ class VectorRetriever:
         return results
 ##调用API，将文本转化为向量（代码经过LLM修改，解决API无法正确调用问题）
 def get_embedding(text:str)->np.ndarray:
-    #print(f"[DEBUG] text type: {type(text)}, value: {repr(text[:100])}")
-    #print(f"DEBUG: API Key = {config.Dashscope_key[:10] if config.Dashscope_key else 'None'}")
     if not config.Dashscope_key or config.Dashscope_key == "":
         raise RuntimeError("API Key 未配置")
 
@@ -66,8 +64,6 @@ def get_embedding(text:str)->np.ndarray:
         raise RuntimeError(f"Embedding API 错误: {resp.get('code')} - {resp.get('message')}")
 
     emb = resp['output']['embeddings'][0]['embedding']
-    #print(
-       # f"[DEBUG] Embedding 向量统计: shape={emb.shape}, mean={emb.mean():.4f}, std={emb.std():.4f}, first5={emb[:5]}")
     return np.array(emb, dtype=np.float32)
 
 
